@@ -1,0 +1,16 @@
+# Python 环境与缓存
+/.venv/
+__pycache__/
+*.py[cod]
+
+# 本地配置（包含 API Key）
+/settings.json
+/settings.tmp
+
+# 模型、音视频素材与转写结果
+/models/
+/Audio/
+
+# 打包中间文件与发布产物
+/build/
+/dist/
