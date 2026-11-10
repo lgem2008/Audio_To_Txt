@@ -1,10 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
+from importlib.util import find_spec
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_all
+from PyInstaller.utils.hooks import copy_metadata
 
 
 project = Path(SPECPATH).resolve().parent
+sherpa = Path(find_spec("sherpa_onnx").origin).parent
+dnd = Path(find_spec("tkinterdnd2").origin).parent
 model_dir = project / "models" / "paraformer-zh-small" / "sherpa-onnx-paraformer-zh-small-2024-03-09"
 vad_model = project / "models" / "vad" / "silero_vad.onnx"
 
@@ -15,23 +18,27 @@ datas = [
     (str(project / "assets" / "audio_to_txt.ico"), "assets"),
 ]
 
-sherpa_datas, sherpa_binaries, sherpa_hiddenimports = collect_all("sherpa_onnx")
-av_datas, av_binaries, av_hiddenimports = collect_all("av")
-dnd_datas, dnd_binaries, dnd_hiddenimports = collect_all("tkinterdnd2")
-datas.extend(sherpa_datas)
-datas.extend(av_datas)
-datas.extend(dnd_datas)
+datas.extend([
+    (str(project / "assets" / "ffmpeg" / "COPYING.LGPLv2.1"), "assets/ffmpeg"),
+    (str(project / "assets" / "ffmpeg" / "BUILD-INFO.txt"), "assets/ffmpeg"),
+    (str(dnd / "tkdnd" / "win-x64"), "tkinterdnd2/tkdnd/win-x64"),
+])
+datas.extend(copy_metadata("sherpa-onnx"))
+datas.extend(copy_metadata("tkinterdnd2"))
 
 a = Analysis(
     [str(project / "transcribe_gui.py")],
     pathex=[str(project)],
-    binaries=sherpa_binaries + av_binaries + dnd_binaries,
+    binaries=[
+        (str(project / "assets" / "ffmpeg" / "ffmpeg.exe"), "assets/ffmpeg"),
+        (str(sherpa / "lib" / "onnxruntime.dll"), "sherpa_onnx/lib"),
+    ],
     datas=datas,
-    hiddenimports=sherpa_hiddenimports + av_hiddenimports + dnd_hiddenimports,
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=["av"],
     noarchive=False,
     optimize=0,
 )

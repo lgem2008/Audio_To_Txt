@@ -1,0 +1,55 @@
+{
+  "ffmpeg": {
+    "version": "8.1.1",
+    "filename": "ffmpeg-n8.1.1.tar.gz",
+    "url": "https://codeload.github.com/FFmpeg/FFmpeg/tar.gz/refs/tags/n8.1.1",
+    "sha256": "918929faccab2700c9cc7be2531c0b74f054a4dd5d3862bc485b0ab17af76486"
+  },
+  "toolchain": {
+    "version": "2.11.0",
+    "filename": "w64devkit-x64-2.11.0.7z.exe",
+    "url": "https://github.com/skeeto/w64devkit/releases/download/v2.11.0/w64devkit-x64-2.11.0.7z.exe?download=1",
+    "sha256": "54c2bb9962e8a30c8270e34c5efc3d5fee579f53087fa7d435b95fbba2af7b2b"
+  },
+  "nasm": {
+    "version": "2.16.03",
+    "filename": "nasm-2.16.03-win64.zip",
+    "url": "https://www.nasm.us/pub/nasm/releasebuilds/2.16.03/win64/nasm-2.16.03-win64.zip",
+    "sha256": "3ee4782247bcb874378d02f7eab4e294a84d3d15f3f6ee2de2f47a46aa7226e6"
+  },
+  "extractor": {
+    "version": "26.04",
+    "filename": "7zr.exe",
+    "url": "https://www.7-zip.org/a/7zr.exe",
+    "sha256": "256feca8e274e5da655e2a284fabafd9f554365eb164862089dacd4e8276d282"
+  },
+  "configure_options": [
+    "--target-os=mingw32",
+    "--arch=x86_64",
+    "--cc=gcc",
+    "--cxx=g++",
+    "--disable-autodetect",
+    "--disable-network",
+    "--disable-doc",
+    "--disable-debug",
+    "--disable-shared",
+    "--enable-static",
+    "--disable-avdevice",
+    "--disable-swscale",
+    "--disable-everything",
+    "--enable-ffmpeg",
+    "--disable-ffplay",
+    "--disable-ffprobe",
+    "--enable-demuxers",
+    "--enable-parsers",
+    "--enable-decoder={audio_decoders}",
+    "--enable-encoder=pcm_f32le",
+    "--enable-muxer=pcm_f32le",
+    "--enable-protocol=file,pipe",
+    "--enable-filter=aresample,aformat,anull,atrim",
+    "--enable-small",
+    "--optflags=-Os",
+    "--extra-cflags=-ffunction-sections -fdata-sections",
+    "--extra-ldflags=-static -Wl,--gc-sections"
+  ]
+}

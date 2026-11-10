@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -29,6 +30,13 @@ def _check_cancelled(cancel_event):
 
 def decode_audio(path: Path, cancel_event=None):
     """Decode audio or a video's audio track to mono, 16 kHz float32 samples."""
+    _check_cancelled(cancel_event)
+    ffmpeg = ROOT / "assets" / "ffmpeg" / "ffmpeg.exe"
+    if sys.platform == "win32" and ffmpeg.is_file():
+        return _decode_audio_ffmpeg(path, ffmpeg, cancel_event)
+    if FROZEN:
+        raise FileNotFoundError("找不到随程序提供的 FFmpeg，请重新解压完整程序")
+
     import av
     import numpy as np
 
@@ -49,6 +57,46 @@ def decode_audio(path: Path, cancel_event=None):
     if not chunks:
         raise ValueError("音频为空或无法解码")
     return np.concatenate(chunks).astype(np.float32, copy=False)
+
+
+def _decode_audio_ffmpeg(path: Path, ffmpeg: Path, cancel_event=None):
+    """Read the first audio stream through the bundled FFmpeg executable."""
+    import numpy as np
+
+    command = [
+        str(ffmpeg), "-hide_banner", "-nostdin", "-v", "error",
+        "-i", str(Path(path).resolve()), "-map", "0:a:0", "-vn", "-sn", "-dn",
+        "-ac", "1", "-ar", str(SAMPLE_RATE),
+        "-c:a", "pcm_f32le", "-f", "f32le", "pipe:1",
+    ]
+    with subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    ) as process:
+        try:
+            while True:
+                _check_cancelled(cancel_event)
+                try:
+                    output, errors = process.communicate(timeout=0.1)
+                    break
+                except subprocess.TimeoutExpired:
+                    continue
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.communicate()
+
+    _check_cancelled(cancel_event)
+    if process.returncode:
+        detail = errors.decode("utf-8", errors="replace").strip()
+        if "matches no streams" in detail:
+            raise ValueError("文件中没有可读取的音轨")
+        raise ValueError(f"音轨读取失败：{detail or '解码进程异常退出'}")
+    if not output:
+        raise ValueError("音频为空或无法解码")
+    return np.frombuffer(output, dtype="<f4").astype(np.float32, copy=False)
 
 
 def detect_speech(audio, vad_model: Path, progress=None, cancel_event=None):
